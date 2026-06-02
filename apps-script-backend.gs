@@ -37,6 +37,44 @@ function doPost(e) {
       folder.createFile(blob);
     });
 
+    // Enviar alerta por correo
+    const emailTo = "backoffice@nomadgenetics.com";
+    const emailSubject = `Nuevo documento cargado: ${folderName}`;
+    const emailBody = `Hola,
+
+Se ha recibido una nueva carga de documentos en el portal.
+
+Detalles:
+- Folio: ${folio}
+- Nombre: ${payload.nombre}
+- Contacto: ${payload.contacto}
+- Tipo: ${payload.tipo || 'N/A'}
+- Área: ${payload.area || 'N/A'}
+- Comentarios: ${payload.comentarios || 'N/A'}
+- Carpeta en Drive: ${folder.getUrl()}
+
+Saludos.`;
+    
+    MailApp.sendEmail(emailTo, emailSubject, emailBody);
+
+    // Enviar alerta por WhatsApp (usando CallMeBot)
+    // NOTA: Para que esto funcione, necesitas obtener tu API_KEY gratuita de CallMeBot.
+    // 1. Agrega el número +34 644 19 82 25 a tus contactos de tu teléfono.
+    // 2. Envíale un mensaje de WhatsApp que diga: I allow callmebot to send me messages
+    // 3. El bot te responderá con tu API_KEY de 6 dígitos. Ponla aquí abajo.
+    const WHATSAPP_NUMBER = "5215579949420"; // Código de país 52 (México) o 521 + número
+    const CALLMEBOT_API_KEY = "PON_TU_API_KEY_AQUI"; 
+    
+    if (CALLMEBOT_API_KEY !== "PON_TU_API_KEY_AQUI") {
+      try {
+        const whatsappMsg = `*Nueva carga de documentos* 📁%0A- Folio: ${folio}%0A- Nombre: ${payload.nombre}%0A- Área: ${payload.area || 'N/A'}`;
+        const whatsappUrl = `https://api.callmebot.com/whatsapp.php?phone=${WHATSAPP_NUMBER}&text=${whatsappMsg}&apikey=${CALLMEBOT_API_KEY}`;
+        UrlFetchApp.fetch(whatsappUrl);
+      } catch(waErr) {
+        // Ignorar si falla el WhatsApp para no detener el proceso
+      }
+    }
+
     return json_({ ok: true, folio, folderName });
   } catch (err) {
     return json_({ ok: false, error: err.message });
